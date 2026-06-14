@@ -354,7 +354,8 @@ def on_fetch():
         st.session_state.transcript_text = ""
         st.session_state.fetch_error = (
             "No English transcript found for this video. "
-            "The video may not have captions enabled or may be geo-restricted on cloud servers."
+            "The video may not have captions, or the transcript could not be retrieved. "
+            "Try a different video."
         )
         return
 
