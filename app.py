@@ -577,12 +577,15 @@ def on_fetch():
 
 
 def on_summarize():
-    """Run summarization using map-reduce to handle long transcripts."""
+    """Run summarization using parallel map-reduce to handle long transcripts."""
     text = st.session_state.transcript_text
     if not text:
         return
 
     from src.rag.vectorstore import chunk_transcript
+    from concurrent.futures import ThreadPoolExecutor, as_completed, wait
+    from groq import Groq
+    import time
 
     placeholder = st.empty()
     chunks = chunk_transcript(text)
@@ -590,9 +593,13 @@ def on_summarize():
         "You are an expert AI assistant that creates concise summaries of YouTube video segments. "
         "Write a brief summary of the key points from this transcript segment. Ignore timestamps."
     )
+    api_key = get_groq_api_key()
+    llm_temp = st.session_state.get("llm_temp", 0.3)
+    llm_max_tokens = st.session_state.get("llm_max_tokens", 1024)
+    total_chunks = len(chunks)
 
-    # If short enough for one API call, summarize directly
-    if len(chunks) <= 3:
+    # Short transcript: summarize directly
+    if total_chunks <= 5:
         prompt = (
             "Read the transcript below and create a concise summary capturing the core message, "
             "key points, and main insights. Write a single well-structured paragraph.\n\n"
@@ -609,25 +616,53 @@ def on_summarize():
         st.session_state.summary_text = full
         return
 
-    # Long transcript: map-reduce
-    chunk_summaries = []
+    # ── Parallel Map Phase ──
+    def _summarize_one(chunk: str, idx: int) -> tuple[int, str]:
+        """Summarize a single chunk with retry on rate-limit."""
+        for attempt in range(3):
+            try:
+                client = Groq(api_key=api_key)
+                resp = client.chat.completions.create(
+                    model=LLM_MODEL,
+                    messages=[
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": f"Summarize this transcript segment in 2-3 sentences capturing only the key points:\n\n[Segment]\n{chunk}\n\n[Summary]"},
+                    ],
+                    temperature=llm_temp,
+                    max_tokens=llm_max_tokens,
+                )
+                return (idx, resp.choices[0].message.content.strip())
+            except Exception as e:
+                err = str(e)
+                if "429" in err or "rate_limit" in err.lower():
+                    if attempt < 2:
+                        time.sleep((attempt + 1) * 1.5)
+                        continue
+                if attempt < 2:
+                    time.sleep(1)
+                    continue
+                return (idx, f"[Error: {err}]")
+        return (idx, "[Error: summarization failed]")
+
+    chunk_summaries: list = [None] * total_chunks
+    completed = 0
     status_text = st.empty()
-    for i, chunk in enumerate(chunks):
-        status_text.caption(f"Summarizing segment {i+1}/{len(chunks)}...")
-        prompt = (
-            "Summarize this transcript segment in 2-3 sentences capturing only the key points:\n\n"
-            f"[Segment]\n{chunk}\n\n[Summary]"
-        )
-        full_chunk = ""
-        for token in stream_groq(prompt, system_prompt=system):
-            full_chunk += token
-        chunk_summaries.append(full_chunk.strip())
+
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        futures = {pool.submit(_summarize_one, chunk, i): i for i, chunk in enumerate(chunks)}
+        for future in as_completed(futures):
+            idx, summary = future.result()
+            chunk_summaries[idx] = summary
+            completed += 1
+            status_text.caption(f"Summarizing chunks... {completed}/{total_chunks}")
     status_text.empty()
 
+    chunk_summaries = [s for s in chunk_summaries if s and not s.startswith("[Error]")]
     if not chunk_summaries:
+        st.error("Failed to summarize any chunks.")
         return
 
-    # Combine chunk summaries into final summary
+    # ── Reduce Phase (streamed) ──
     combined = "\n".join(f"[Segment {i+1}] {s}" for i, s in enumerate(chunk_summaries))
 
     reduce_system = (
