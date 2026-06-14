@@ -594,9 +594,6 @@ with tab2:
             on_ask(question)
         st.rerun()
 
-    with st.expander("View Full Transcript", expanded=False):
-        txt = st.session_state.transcript_text
-        st.text_area("Transcript", value=txt[:10000] + ("..." if len(txt) > 10000 else ""), height=300, disabled=True, label_visibility="collapsed")
 
 # ─── Sidebar ───
 with st.sidebar:
