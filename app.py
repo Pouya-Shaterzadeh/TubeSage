@@ -246,7 +246,11 @@ st.markdown("""
 @st.cache_resource
 def _load_embeddings():
     from src.models.embeddings import get_embeddings
-    return get_embeddings()
+    try:
+        return get_embeddings()
+    except Exception as e:
+        st.error(f"Failed to load embedding model: {e}")
+        st.stop()
 
 @st.cache_resource
 def _load_llm():
@@ -263,6 +267,7 @@ DEFAULTS = {
     "faiss_index_id": None,
     "summary_text": "",
     "chat_history": [],
+    "fetch_error": "",
 }
 for key, val in DEFAULTS.items():
     if key not in st.session_state:
@@ -338,10 +343,22 @@ def on_fetch():
     st.session_state.summary_text = ""
     st.session_state.chat_history = []
 
-    raw, vid = get_transcript(url)
-    if raw is None:
+    try:
+        raw, vid = get_transcript(url)
+    except Exception as e:
+        st.session_state.transcript_text = ""
+        st.session_state.fetch_error = f"Transcript API error: {e}"
         return
 
+    if raw is None:
+        st.session_state.transcript_text = ""
+        st.session_state.fetch_error = (
+            "No English transcript found for this video. "
+            "The video may not have captions enabled or may be geo-restricted on cloud servers."
+        )
+        return
+
+    st.session_state.fetch_error = ""
     st.session_state.transcript_raw = raw
     st.session_state.transcript_text = format_transcript(raw)
     st.session_state.video_id = vid
@@ -506,18 +523,21 @@ if meta and meta.get("title"):
 
 # No transcript state
 if not st.session_state.transcript_text:
-    st.markdown("""
-    <div class="glass-card" style="text-align:center; padding:3rem 1rem; margin:2rem 0;">
-        <p style="font-size:1.2rem; color:#6B7280; letter-spacing:2px;">PASTE A YOUTUBE URL TO BEGIN</p>
-        <p style="font-size:0.8rem; color:#3a3a4e; margin-top:1rem;">
-        LLM: <span style="color:#00F0FF;">Llama 3.1 8B</span> via Groq
-        &nbsp;·&nbsp;
-        Embeddings: <span style="color:#FF00FF;">all-MiniLM-L6-v2</span>
-        &nbsp;·&nbsp;
-        FAISS Vector Search
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    if st.session_state.fetch_error:
+        st.error(st.session_state.fetch_error)
+    else:
+        st.markdown("""
+        <div class="glass-card" style="text-align:center; padding:3rem 1rem; margin:2rem 0;">
+            <p style="font-size:1.2rem; color:#6B7280; letter-spacing:2px;">PASTE A YOUTUBE URL TO BEGIN</p>
+            <p style="font-size:0.8rem; color:#3a3a4e; margin-top:1rem;">
+            LLM: <span style="color:#00F0FF;">Llama 3.1 8B</span> via Groq
+            &nbsp;·&nbsp;
+            Embeddings: <span style="color:#FF00FF;">all-MiniLM-L6-v2</span>
+            &nbsp;·&nbsp;
+            FAISS Vector Search
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
     st.markdown('<div class="app-footer">TubeSage v1.0 · Built with Streamlit · Deploy on Streamlit Cloud</div>', unsafe_allow_html=True)
     st.stop()
 
