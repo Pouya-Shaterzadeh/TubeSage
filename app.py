@@ -498,7 +498,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 st.markdown('<h1 class="app-title">TUBESAGE<span class="terminal-cursor"></span></h1>', unsafe_allow_html=True)
-st.markdown('<p class="app-subtitle">Watch Less. Know More.</p>', unsafe_allow_html=True)
+st.markdown("<p class=\"app-subtitle\">Don't watch it all. Know it all.</p>", unsafe_allow_html=True)
 
 # Video URL input
 col_url, col_btn, _ = st.columns([5, 1, 1])
