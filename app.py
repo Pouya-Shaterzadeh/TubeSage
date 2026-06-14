@@ -22,8 +22,83 @@ st.set_page_config(
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
+    /* ── Animated Aurora Background ── */
     .stApp {
-        background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0a0a0f 60%, #050510 100%);
+        background: #0A0A0F;
+    }
+
+    .stApp::before {
+        content: "";
+        position: fixed;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        z-index: -1;
+        background:
+            radial-gradient(ellipse at 20% 50%, rgba(0,240,255,0.08) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 20%, rgba(255,0,255,0.06) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 80%, rgba(0,240,255,0.05) 0%, transparent 50%),
+            radial-gradient(ellipse at 60% 40%, rgba(100,0,255,0.04) 0%, transparent 50%);
+        animation: auroraShift 12s ease-in-out infinite;
+    }
+
+    .stApp::after {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background-image:
+            radial-gradient(1px 1px at 10% 15%, rgba(0,240,255,0.4), transparent),
+            radial-gradient(1px 1px at 25% 35%, rgba(255,0,255,0.3), transparent),
+            radial-gradient(1px 1px at 40% 55%, rgba(0,240,255,0.25), transparent),
+            radial-gradient(1px 1px at 55% 25%, rgba(255,0,255,0.35), transparent),
+            radial-gradient(1.5px 1.5px at 70% 60%, rgba(0,240,255,0.3), transparent),
+            radial-gradient(1px 1px at 85% 45%, rgba(255,0,255,0.25), transparent),
+            radial-gradient(1.5px 1.5px at 15% 75%, rgba(0,240,255,0.3), transparent),
+            radial-gradient(1px 1px at 60% 80%, rgba(255,0,255,0.2), transparent),
+            radial-gradient(1px 1px at 90% 90%, rgba(0,240,255,0.3), transparent),
+            radial-gradient(1.5px 1.5px at 35% 15%, rgba(100,0,255,0.25), transparent),
+            radial-gradient(1px 1px at 75% 10%, rgba(0,240,255,0.2), transparent),
+            radial-gradient(1px 1px at 50% 70%, rgba(255,0,255,0.3), transparent);
+        animation: particlesFloat 20s linear infinite;
+        opacity: 0.7;
+    }
+
+    @keyframes auroraShift {
+        0%, 100% {
+            transform: translate(0, 0) rotate(0deg);
+        }
+        25% {
+            transform: translate(3%, -2%) rotate(1deg);
+        }
+        50% {
+            transform: translate(-2%, 3%) rotate(-1deg);
+        }
+        75% {
+            transform: translate(-3%, -1%) rotate(0.5deg);
+        }
+    }
+
+    @keyframes particlesFloat {
+        0% {
+            transform: translateY(0) translateX(0);
+        }
+        25% {
+            transform: translateY(-2%) translateX(1%);
+        }
+        50% {
+            transform: translateY(-1%) translateX(-1%);
+        }
+        75% {
+            transform: translateY(1%) translateX(-2%);
+        }
+        100% {
+            transform: translateY(0) translateX(0);
+        }
     }
 
     h1, h2, h3, h4, h5, h6, .stMarkdown p, .stMarkdown li, .stText {
