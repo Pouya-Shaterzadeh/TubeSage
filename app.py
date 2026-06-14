@@ -784,7 +784,7 @@ if not st.session_state.transcript_text:
     else:
         st.markdown("""
         <div class="glass-card" style="text-align:center; padding:3rem 1rem; margin:2rem 0;">
-            <p style="font-size:1.2rem; color:#6B7280; letter-spacing:2px;">GOT A LINK? LET'S GO.</p>
+            <p style="font-size:1.2rem; color:#6B7280; letter-spacing:2px;">GOT A LINK? LET'S GO!</p>
             <p style="font-size:0.8rem; color:#3a3a4e; margin-top:1rem;">
             LLM: <span style="color:#00F0FF;">Llama 3.1 8B</span> via Groq
             &nbsp;·&nbsp;
