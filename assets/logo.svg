@@ -1,28 +1,78 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
   <defs>
-    <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="borderGrad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#00F0FF"/>
+      <stop offset="40%" stop-color="#00B8E6"/>
+      <stop offset="60%" stop-color="#E600E6"/>
       <stop offset="100%" stop-color="#FF00FF"/>
     </linearGradient>
-    <linearGradient id="innerGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0A0A0F"/>
-      <stop offset="100%" stop-color="#141420"/>
-    </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="2" result="blur"/>
+    <radialGradient id="orbGrad" cx="45%" cy="40%">
+      <stop offset="0%" stop-color="#1A2A4A"/>
+      <stop offset="60%" stop-color="#0F1025"/>
+      <stop offset="100%" stop-color="#06060E"/>
+    </radialGradient>
+    <radialGradient id="playGlow" cx="50%" cy="50%">
+      <stop offset="0%" stop-color="#00F0FF" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#00F0FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="accentGlow" cx="50%" cy="50%">
+      <stop offset="0%" stop-color="#FF00FF" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#FF00FF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="outerGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="innerGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
-  <!-- Outer ring -->
-  <circle cx="64" cy="64" r="58" stroke="url(#logoGrad)" stroke-width="2" fill="#0A0A0F" opacity="0.9"/>
-  <!-- Inner circle -->
-  <circle cx="64" cy="64" r="46" fill="url(#innerGrad)" stroke="rgba(0,240,255,0.25)" stroke-width="1"/>
-  <!-- Play triangle (Tube reference) -->
-  <polygon points="53,42 88,64 53,86" fill="none" stroke="url(#logoGrad)" stroke-width="2.5" filter="url(#glow)"/>
-  <!-- Stylized "S" (Sage) -->
-  <path d="M72 55 L60 55 C58 55 56 56 56 58 C56 61 61 63 67 65 C73 67 78 69 78 73 C78 76 75 79 72 79 L57 79" fill="none" stroke="#FF00FF" stroke-width="2.5" stroke-linecap="round" filter="url(#glow)"/>
-  <!-- Bottom dots (wisdom/sage) -->
-  <circle cx="53" cy="93" r="2" fill="#00F0FF" opacity="0.6"/>
-  <circle cx="64" cy="93" r="2" fill="#FF00FF" opacity="0.4"/>
-  <circle cx="75" cy="93" r="2" fill="#00F0FF" opacity="0.6"/>
+
+  <!-- Outer crystal octagon frame -->
+  <polygon points="64,8 92,24 116,52 120,80 104,108 76,120 48,120 20,108 8,80 12,52 36,24" fill="#0A0A0F" stroke="url(#borderGrad)" stroke-width="1.8" filter="url(#outerGlow)" opacity="0.9"/>
+  
+  <!-- Inner ring -->
+  <circle cx="64" cy="64" r="48" fill="url(#orbGrad)" stroke="url(#borderGrad)" stroke-width="0.8" opacity="0.5"/>
+
+  <!-- Inner accent ring -->
+  <circle cx="64" cy="64" r="44" fill="none" stroke="#00F0FF" stroke-width="0.4" opacity="0.2"/>
+
+  <!-- Radiating wisdom rays -->
+  <g opacity="0.12" filter="url(#innerGlow)">
+    <line x1="64" y1="26" x2="64" y2="16" stroke="#00F0FF" stroke-width="1"/>
+    <line x1="64" y1="102" x2="64" y2="112" stroke="#00F0FF" stroke-width="1"/>
+    <line x1="26" y1="64" x2="16" y2="64" stroke="#00F0FF" stroke-width="1"/>
+    <line x1="102" y1="64" x2="112" y2="64" stroke="#00F0FF" stroke-width="1"/>
+    <line x1="38" y1="38" x2="31" y2="31" stroke="#FF00FF" stroke-width="0.7"/>
+    <line x1="90" y1="38" x2="97" y2="31" stroke="#FF00FF" stroke-width="0.7"/>
+    <line x1="38" y1="90" x2="31" y2="97" stroke="#FF00FF" stroke-width="0.7"/>
+    <line x1="90" y1="90" x2="97" y2="97" stroke="#FF00FF" stroke-width="0.7"/>
+  </g>
+
+  <!-- Play glow aura -->
+  <circle cx="64" cy="64" r="32" fill="url(#playGlow)"/>
+
+  <!-- Play triangle (Tube) - with fill gradient -->
+  <polygon points="52,44 88,64 52,84" fill="none" stroke="url(#borderGrad)" stroke-width="2.2" stroke-linejoin="round" filter="url(#innerGlow)"/>
+
+  <!-- Wisdom constellation dots -->
+  <g filter="url(#innerGlow)">
+    <circle cx="72" cy="30" r="1.5" fill="#FF00FF" opacity="0.8"/>
+    <circle cx="88" cy="42" r="1.5" fill="#00F0FF" opacity="0.8"/>
+    <circle cx="96" cy="60" r="1.5" fill="#FF00FF" opacity="0.6"/>
+    <circle cx="92" cy="78" r="1.5" fill="#00F0FF" opacity="0.8"/>
+    <circle cx="78" cy="92" r="1.5" fill="#FF00FF" opacity="0.8"/>
+    <circle cx="56" cy="96" r="1.5" fill="#00F0FF" opacity="0.6"/>
+    <circle cx="38" cy="88" r="1.5" fill="#FF00FF" opacity="0.8"/>
+    <circle cx="26" cy="70" r="1.5" fill="#00F0FF" opacity="0.8"/>
+    <circle cx="28" cy="48" r="1.5" fill="#FF00FF" opacity="0.6"/>
+    <circle cx="40" cy="32" r="1.5" fill="#00F0FF" opacity="0.8"/>
+  </g>
+
+  <!-- Tiny accent sparkles -->
+  <circle cx="56" cy="22" r="0.8" fill="#00F0FF" opacity="0.5"/>
+  <circle cx="64" cy="106" r="0.8" fill="#FF00FF" opacity="0.5"/>
+  <circle cx="30" cy="64" r="0.8" fill="#00F0FF" opacity="0.5"/>
+  <circle cx="98" cy="64" r="0.8" fill="#FF00FF" opacity="0.5"/>
 </svg>
