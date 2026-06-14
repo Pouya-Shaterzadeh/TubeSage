@@ -754,7 +754,7 @@ with col_url:
     )
 with col_btn:
     st.markdown('<div class="primary-btn">', unsafe_allow_html=True)
-    st.button("FETCH", key="fetch_btn", on_click=on_fetch, use_container_width=True)
+    st.button("DECODE", key="fetch_btn", on_click=on_fetch, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Video metadata bar
