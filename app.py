@@ -26,8 +26,15 @@ st.markdown("""
         background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0a0a0f 60%, #050510 100%);
     }
 
-    h1, h2, h3, h4, h5, h6, .stMarkdown, .stText, p, span, div {
+    h1, h2, h3, h4, h5, h6, .stMarkdown p, .stMarkdown li, .stText {
         font-family: 'Share Tech Mono', 'Space Mono', 'Courier New', monospace !important;
+    }
+
+    /* Preserve Material Icons */
+    [data-testid="stIconMaterial"],
+    [data-testid="stSidebarCollapseButton"] *,
+    .st-emotion-cache-1dkvzay {
+        font-family: "Material Icons", "Material Icons Outlined" !important;
     }
 
     .app-title {
