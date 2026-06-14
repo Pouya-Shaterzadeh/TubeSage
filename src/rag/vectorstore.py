@@ -1,7 +1,11 @@
 import hashlib
-import pickle
 from pathlib import Path
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+try:
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+except ImportError:
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+
 from langchain_community.vectorstores import FAISS
 
 from src.config import CHUNK_SIZE, CHUNK_OVERLAP, FAISS_INDEX_DIR
