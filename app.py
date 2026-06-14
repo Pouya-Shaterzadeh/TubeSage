@@ -22,83 +22,97 @@ st.set_page_config(
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-    /* ── Animated Aurora Background ── */
+    /* ── Base ── */
     .stApp {
-        background: #0A0A0F;
+        background: #06060E;
     }
 
-    .stApp::before {
-        content: "";
+    /* ── Constellation Background SVG ── */
+    #tubesage-bg {
         position: fixed;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        z-index: -1;
-        background:
-            radial-gradient(ellipse at 20% 50%, rgba(0,240,255,0.08) 0%, transparent 50%),
-            radial-gradient(ellipse at 80% 20%, rgba(255,0,255,0.06) 0%, transparent 50%),
-            radial-gradient(ellipse at 50% 80%, rgba(0,240,255,0.05) 0%, transparent 50%),
-            radial-gradient(ellipse at 60% 40%, rgba(100,0,255,0.04) 0%, transparent 50%);
-        animation: auroraShift 12s ease-in-out infinite;
+        top: 0; left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -2;
+        pointer-events: none;
     }
 
+    /* ── Constellation Node Pulsing ── */
+    .ts-node { animation: nodePulse 3s ease-in-out infinite; }
+    .ts-node:nth-child(1)  { animation-delay: 0.0s; }
+    .ts-node:nth-child(2)  { animation-delay: 0.3s; }
+    .ts-node:nth-child(3)  { animation-delay: 0.6s; }
+    .ts-node:nth-child(4)  { animation-delay: 0.9s; }
+    .ts-node:nth-child(5)  { animation-delay: 1.2s; }
+    .ts-node:nth-child(6)  { animation-delay: 1.5s; }
+    .ts-node:nth-child(7)  { animation-delay: 1.8s; }
+    .ts-node:nth-child(8)  { animation-delay: 2.1s; }
+    .ts-node:nth-child(9)  { animation-delay: 2.4s; }
+    .ts-node:nth-child(10) { animation-delay: 2.7s; }
+    .ts-node:nth-child(11) { animation-delay: 1.0s; }
+    .ts-node:nth-child(12) { animation-delay: 1.6s; }
+
+    @keyframes nodePulse {
+        0%, 100% { opacity: 0.35; r: 1.4; }
+        50%      { opacity: 1;    r: 2.5; }
+    }
+
+    /* ── Connection Line Shimmer ── */
+    .ts-line {
+        stroke-dasharray: 4 12;
+        animation: lineShimmer 4s linear infinite;
+    }
+    .ts-line:nth-child(odd)  { animation-duration: 5s; animation-delay: 0s; }
+    .ts-line:nth-child(even) { animation-duration: 4s; animation-delay: 2s; }
+
+    @keyframes lineShimmer {
+        0%   { stroke-dashoffset: 0; }
+        100% { stroke-dashoffset: 32; }
+    }
+
+    /* ── Crystal Rotation ── */
+    .ts-crystal {
+        animation: crystalRotate 20s linear infinite;
+        transform-origin: 50px 50px;
+    }
+    @keyframes crystalRotate {
+        0%   { transform: rotate(0deg) scale(1); }
+        50%  { transform: rotate(180deg) scale(1.08); }
+        100% { transform: rotate(360deg) scale(1); }
+    }
+
+    /* ── Crystal Glow Pulse ── */
+    .ts-crystal-glow {
+        animation: crystalGlow 4s ease-in-out infinite;
+    }
+    @keyframes crystalGlow {
+        0%, 100% { opacity: 0.15; }
+        50%      { opacity: 0.35; }
+    }
+
+    /* ── Starfield Drift ── */
+    .ts-star { animation: starDrift 30s linear infinite; }
+    @keyframes starDrift {
+        0%   { opacity: 0.2; transform: translateY(0); }
+        50%  { opacity: 0.6; transform: translateY(-3px); }
+        100% { opacity: 0.2; transform: translateY(0); }
+    }
+
+    /* ── Subtle Scan Line Overlay ── */
     .stApp::after {
         content: "";
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
         z-index: -1;
-        background-image:
-            radial-gradient(1px 1px at 10% 15%, rgba(0,240,255,0.4), transparent),
-            radial-gradient(1px 1px at 25% 35%, rgba(255,0,255,0.3), transparent),
-            radial-gradient(1px 1px at 40% 55%, rgba(0,240,255,0.25), transparent),
-            radial-gradient(1px 1px at 55% 25%, rgba(255,0,255,0.35), transparent),
-            radial-gradient(1.5px 1.5px at 70% 60%, rgba(0,240,255,0.3), transparent),
-            radial-gradient(1px 1px at 85% 45%, rgba(255,0,255,0.25), transparent),
-            radial-gradient(1.5px 1.5px at 15% 75%, rgba(0,240,255,0.3), transparent),
-            radial-gradient(1px 1px at 60% 80%, rgba(255,0,255,0.2), transparent),
-            radial-gradient(1px 1px at 90% 90%, rgba(0,240,255,0.3), transparent),
-            radial-gradient(1.5px 1.5px at 35% 15%, rgba(100,0,255,0.25), transparent),
-            radial-gradient(1px 1px at 75% 10%, rgba(0,240,255,0.2), transparent),
-            radial-gradient(1px 1px at 50% 70%, rgba(255,0,255,0.3), transparent);
-        animation: particlesFloat 20s linear infinite;
-        opacity: 0.7;
-    }
-
-    @keyframes auroraShift {
-        0%, 100% {
-            transform: translate(0, 0) rotate(0deg);
-        }
-        25% {
-            transform: translate(3%, -2%) rotate(1deg);
-        }
-        50% {
-            transform: translate(-2%, 3%) rotate(-1deg);
-        }
-        75% {
-            transform: translate(-3%, -1%) rotate(0.5deg);
-        }
-    }
-
-    @keyframes particlesFloat {
-        0% {
-            transform: translateY(0) translateX(0);
-        }
-        25% {
-            transform: translateY(-2%) translateX(1%);
-        }
-        50% {
-            transform: translateY(-1%) translateX(-1%);
-        }
-        75% {
-            transform: translateY(1%) translateX(-2%);
-        }
-        100% {
-            transform: translateY(0) translateX(0);
-        }
+        background: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 240, 255, 0.008) 2px,
+            rgba(0, 240, 255, 0.008) 4px
+        );
+        pointer-events: none;
     }
 
     h1, h2, h3, h4, h5, h6, .stMarkdown p, .stMarkdown li, .stText {
@@ -322,6 +336,120 @@ st.markdown("""
         50% { opacity: 0.4; box-shadow: 0 0 12px #00FF88; }
     }
 </style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<svg id="tubesage-bg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice">
+    <defs>
+        <radialGradient id="nodeGlowCyan" cx="50%" cy="50%">
+            <stop offset="0%" stop-color="#00F0FF" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#00F0FF" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="nodeGlowMagenta" cx="50%" cy="50%">
+            <stop offset="0%" stop-color="#FF00FF" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#FF00FF" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="lineGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00F0FF" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#FF00FF" stop-opacity="0.15"/>
+        </linearGradient>
+        <linearGradient id="lineGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#FF00FF" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#00F0FF" stop-opacity="0.1"/>
+        </linearGradient>
+        <radialGradient id="crystalGrad" cx="50%" cy="50%">
+            <stop offset="0%" stop-color="#00F0FF" stop-opacity="0.15"/>
+            <stop offset="50%" stop-color="#FF00FF" stop-opacity="0.06"/>
+            <stop offset="100%" stop-color="#00F0FF" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+    </defs>
+
+    <!-- Starfield -->
+    <g class="ts-star" opacity="0.3">
+        <circle cx="50" cy="80" r="0.8" fill="#00F0FF" style="animation-delay:0s"/>
+        <circle cx="150" cy="30" r="0.6" fill="#FF00FF" style="animation-delay:2s"/>
+        <circle cx="250" cy="120" r="0.7" fill="#00F0FF" style="animation-delay:5s"/>
+        <circle cx="380" cy="45" r="0.9" fill="#FFFFFF" style="animation-delay:1s"/>
+        <circle cx="480" cy="15" r="0.5" fill="#00F0FF" style="animation-delay:8s"/>
+        <circle cx="560" cy="90" r="0.7" fill="#FF00FF" style="animation-delay:3s"/>
+        <circle cx="650" cy="35" r="0.6" fill="#00F0FF" style="animation-delay:6s"/>
+        <circle cx="750" cy="110" r="0.8" fill="#FFFFFF" style="animation-delay:4s"/>
+        <circle cx="830" cy="50" r="0.5" fill="#FF00FF" style="animation-delay:7s"/>
+        <circle cx="910" cy="85" r="0.7" fill="#00F0FF" style="animation-delay:1s"/>
+        <circle cx="100" cy="180" r="0.6" fill="#00F0FF" style="animation-delay:9s"/>
+        <circle cx="300" cy="250" r="0.5" fill="#FF00FF" style="animation-delay:2s"/>
+        <circle cx="700" cy="200" r="0.8" fill="#00F0FF" style="animation-delay:5s"/>
+        <circle cx="880" cy="260" r="0.6" fill="#FFFFFF" style="animation-delay:3s"/>
+        <circle cx="120" cy="350" r="0.7" fill="#00F0FF" style="animation-delay:6s"/>
+        <circle cx="620" cy="300" r="0.5" fill="#FF00FF" style="animation-delay:1s"/>
+        <circle cx="820" cy="400" r="0.6" fill="#00F0FF" style="animation-delay:8s"/>
+        <circle cx="200" cy="500" r="0.8" fill="#00F0FF" style="animation-delay:4s"/>
+        <circle cx="400" cy="580" r="0.5" fill="#FF00FF" style="animation-delay:7s"/>
+        <circle cx="600" cy="620" r="0.7" fill="#00F0FF" style="animation-delay:2s"/>
+        <circle cx="800" cy="550" r="0.6" fill="#FFFFFF" style="animation-delay:5s"/>
+        <circle cx="900" cy="630" r="0.5" fill="#00F0FF" style="animation-delay:9s"/>
+        <circle cx="50" cy="620" r="0.7" fill="#FF00FF" style="animation-delay:1s"/>
+        <circle cx="500" cy="680" r="0.6" fill="#00F0FF" style="animation-delay:3s"/>
+    </g>
+
+    <!-- Crystal Glow Background -->
+    <circle cx="500" cy="350" r="120" fill="url(#crystalGrad)" class="ts-crystal-glow"/>
+
+    <!-- Connection Lines (Knowledge Web) -->
+    <g opacity="0.35">
+        <line x1="120" y1="160" x2="300" y2="70" stroke="url(#lineGrad1)" stroke-width="0.8" class="ts-line"/>
+        <line x1="300" y1="70" x2="520" y2="50" stroke="url(#lineGrad2)" stroke-width="0.8" class="ts-line"/>
+        <line x1="520" y1="50" x2="780" y2="100" stroke="url(#lineGrad1)" stroke-width="0.8" class="ts-line"/>
+        <line x1="780" y1="100" x2="900" y2="250" stroke="url(#lineGrad2)" stroke-width="0.8" class="ts-line"/>
+        <line x1="900" y1="250" x2="850" y2="500" stroke="url(#lineGrad1)" stroke-width="0.8" class="ts-line"/>
+        <line x1="850" y1="500" x2="650" y2="600" stroke="url(#lineGrad2)" stroke-width="0.8" class="ts-line"/>
+        <line x1="650" y1="600" x2="350" y2="580" stroke="url(#lineGrad1)" stroke-width="0.8" class="ts-line"/>
+        <line x1="350" y1="580" x2="100" y2="550" stroke="url(#lineGrad2)" stroke-width="0.8" class="ts-line"/>
+        <line x1="100" y1="550" x2="40" y2="320" stroke="url(#lineGrad1)" stroke-width="0.8" class="ts-line"/>
+        <line x1="40" y1="320" x2="120" y2="160" stroke="url(#lineGrad2)" stroke-width="0.8" class="ts-line"/>
+        <!-- Inner web -->
+        <line x1="300" y1="70" x2="500" y2="350" stroke="url(#lineGrad1)" stroke-width="0.5" class="ts-line" opacity="0.5"/>
+        <line x1="780" y1="100" x2="500" y2="350" stroke="url(#lineGrad2)" stroke-width="0.5" class="ts-line" opacity="0.5"/>
+        <line x1="850" y1="500" x2="500" y2="350" stroke="url(#lineGrad1)" stroke-width="0.5" class="ts-line" opacity="0.5"/>
+        <line x1="350" y1="580" x2="500" y2="350" stroke="url(#lineGrad2)" stroke-width="0.5" class="ts-line" opacity="0.5"/>
+        <line x1="120" y1="160" x2="500" y2="350" stroke="url(#lineGrad1)" stroke-width="0.5" class="ts-line" opacity="0.5"/>
+        <line x1="910" y1="250" x2="500" y2="350" stroke="url(#lineGrad2)" stroke-width="0.5" class="ts-line" opacity="0.5"/>
+    </g>
+
+    <!-- Constellations Nodes -->
+    <g filter="url(#glow)">
+        <circle cx="120" cy="160" r="2" fill="#FF00FF" class="ts-node"/>
+        <circle cx="300" cy="70" r="2" fill="#00F0FF" class="ts-node"/>
+        <circle cx="520" cy="50" r="2" fill="#FF00FF" class="ts-node"/>
+        <circle cx="780" cy="100" r="2" fill="#00F0FF" class="ts-node"/>
+        <circle cx="910" cy="250" r="2" fill="#FF00FF" class="ts-node"/>
+        <circle cx="850" cy="500" r="2" fill="#00F0FF" class="ts-node"/>
+        <circle cx="650" cy="600" r="2" fill="#FF00FF" class="ts-node"/>
+        <circle cx="350" cy="580" r="2" fill="#00F0FF" class="ts-node"/>
+        <circle cx="100" cy="550" r="2" fill="#FF00FF" class="ts-node"/>
+        <circle cx="40" cy="320" r="2" fill="#00F0FF" class="ts-node"/>
+        <circle cx="150" cy="450" r="1.5" fill="#FFFFFF" class="ts-node"/>
+        <circle cx="780" cy="380" r="1.5" fill="#FFFFFF" class="ts-node"/>
+    </g>
+
+    <!-- Crystal (Octahedron Wireframe) -->
+    <g class="ts-crystal" filter="url(#glow)">
+        <!-- Outer diamond -->
+        <polygon points="500,290 540,350 500,410 460,350" fill="none" stroke="#00F0FF" stroke-width="0.8" opacity="0.7"/>
+        <!-- Inner diamond -->
+        <polygon points="500,320 520,350 500,380 480,350" fill="none" stroke="#FF00FF" stroke-width="0.6" opacity="0.5"/>
+        <!-- Cross lines -->
+        <line x1="500" y1="290" x2="500" y2="410" stroke="#00F0FF" stroke-width="0.4" opacity="0.4"/>
+        <line x1="460" y1="350" x2="540" y2="350" stroke="#FF00FF" stroke-width="0.4" opacity="0.4"/>
+        <!-- Diagonal -->
+        <line x1="480" y1="320" x2="520" y2="380" stroke="#00F0FF" stroke-width="0.3" opacity="0.3"/>
+        <line x1="520" y1="320" x2="480" y2="380" stroke="#FF00FF" stroke-width="0.3" opacity="0.3"/>
+    </g>
+</svg>
 """, unsafe_allow_html=True)
 
 # ─── Lazy Imports ───
