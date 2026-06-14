@@ -338,7 +338,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("""
+st.html("""
 <svg id="tubesage-bg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice">
     <defs>
         <radialGradient id="nodeGlowCyan" cx="50%" cy="50%">
@@ -450,7 +450,7 @@ st.markdown("""
         <line x1="520" y1="320" x2="480" y2="380" stroke="#FF00FF" stroke-width="0.3" opacity="0.3"/>
     </g>
 </svg>
-""", unsafe_allow_html=True)
+""")
 
 # ─── Lazy Imports ───
 @st.cache_resource
