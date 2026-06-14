@@ -126,6 +126,11 @@ st.markdown("""
         font-family: "Material Icons", "Material Icons Outlined" !important;
     }
 
+    /* Hide the sidebar collapse button entirely */
+    [data-testid="stSidebarCollapseButton"] {
+        display: none !important;
+    }
+
     .app-title {
         font-family: 'Share Tech Mono', monospace !important;
         font-size: 3.2rem !important;
