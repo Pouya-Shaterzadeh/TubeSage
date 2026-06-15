@@ -186,7 +186,17 @@ def format_transcript(transcript) -> str:
             else:
                 text = item.text if hasattr(item, "text") else ""
                 start = item.start if hasattr(item, "start") else 0
-            txt += f"Text: {text} Start: {start}\n"
+            ts = _seconds_to_timestamp(start)
+            txt += f"Text: {text} Timestamp: {ts}\n"
         except (KeyError, AttributeError, TypeError):
             pass
     return txt
+
+
+def _seconds_to_timestamp(seconds: float) -> str:
+    s = int(seconds)
+    h, m = divmod(s, 3600)
+    m, s = divmod(m, 60)
+    if h > 0:
+        return f"{h}:{m:02d}:{s:02d}"
+    return f"{m}:{s:02d}"

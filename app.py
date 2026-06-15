@@ -618,7 +618,8 @@ def on_summarize():
     chunks = chunk_transcript(text)
     system = (
         "You are an expert AI assistant that creates concise summaries of YouTube video segments. "
-        "Write a brief summary of the key points from this transcript segment. Ignore timestamps."
+        "Write a brief summary of the key points from this transcript segment. "
+        "Ignore timestamps (Timestamp: M:SS) — focus on content only."
     )
     api_key = get_groq_api_key()
     llm_temp = st.session_state.get("llm_temp", 0.3)
@@ -752,7 +753,8 @@ def on_summarize():
 
     reduce_system = (
         "You are an expert AI assistant that creates concise, insightful summaries of YouTube videos. "
-        "Synthesize segment summaries into one well-structured paragraph. Be engaging and informative."
+        "Synthesize segment summaries into one well-structured paragraph. Be engaging and informative. "
+        "Do not mention timestamps."
     )
     reduce_prompt = (
         "Below are summaries of different segments of a YouTube video. "
@@ -788,7 +790,8 @@ def on_ask(question: str):
 
     system = (
         "You are an expert answering questions about a YouTube video based on its transcript. "
-        "Answer using ONLY the context below. Be precise and include timestamps (Start: X.X) where relevant. "
+        "Answer using ONLY the context below. Be precise and include timestamps "
+        "(they appear as 'Timestamp: M:SS' in the transcript). "
         "If the context doesn't contain enough info, say so honestly."
     )
     prompt = (
