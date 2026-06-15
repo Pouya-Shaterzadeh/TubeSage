@@ -13,7 +13,7 @@ from src.config import (
 # ─── Page Config ───
 st.set_page_config(
     page_title="TubeSage — AI YouTube Summarizer",
-    page_icon="🔮",
+    page_icon="assets/logo.png",
     layout="wide",
     initial_sidebar_state="expanded",
 )
