@@ -2,7 +2,7 @@
 
 > *Don't watch it all. Know it all.*
 
-**AI-powered YouTube summarizer & Q&A** — paste a video URL, get an instant summary and ask any question about the content. Powered by Groq, LangChain, FAISS, and sentence-transformers.
+**AI-powered YouTube summarizer & Q&A** — paste a video URL, get an instant summary and ask any question about the content. Powered by Groq, Cloudflare Workers AI, OpenRouter, LangChain, FAISS, and sentence-transformers.
 
 ---
 
@@ -35,17 +35,19 @@ Deployed on Streamlit Cloud: **[tubesage.streamlit.app](https://tubesage.streaml
 │                     │                            │
 │                HTTPS API                         │
 │                     ▼                            │
-│  ┌──────────────────────────────────────────┐   │
-│  │     Groq API — llama-3.1-8b-instant      │   │
-│  │     (OpenAI-compatible endpoint)          │   │
-│  └──────────────────────────────────────────┘   │
+│  ┌──────────────────────────────────────────────┐  │
+│  │  LLM Fallback Chain:                          │  │
+│  │  1. Groq 70B (14K req/day free)               │  │
+│  │  2. Cloudflare Workers AI (10K neurons/day)    │  │
+│  │  3. OpenRouter (50 req/day free)              │  │
+│  └──────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────┘
 ```
 
 | Component | Technology | Runtime |
 |-----------|-----------|---------|
 | **Frontend** | Streamlit | Streamlit Cloud (free) |
-| **LLM** | Groq API → `llama-3.1-8b-instant` | Free tier: 14,400 req/day |
+| **LLM** | Groq → Cloudflare Workers AI → OpenRouter fallback chain | Free multi-provider |
 | **Embeddings** | `all-MiniLM-L6-v2` via sentence-transformers | Runs in container (CPU) |
 | **Vector Store** | FAISS | Disk-persisted per video |
 | **Transcript** | `youtube-transcript-api` + `yt-dlp` (fallback) | Dual fetcher |
@@ -58,6 +60,8 @@ Deployed on Streamlit Cloud: **[tubesage.streamlit.app](https://tubesage.streaml
 ### Prerequisites
 - Python 3.10+
 - A [Groq API key](https://console.groq.com/keys) (free tier — no credit card)
+- Optional: [Cloudflare Workers AI](https://dash.cloudflare.com) API token (free, no credit card)
+- Optional: [OpenRouter API key](https://openrouter.ai/keys) (free tier)
 
 ### Install
 
@@ -73,7 +77,13 @@ pip install -r requirements.txt
 
 ```bash
 # Create secrets file
-echo 'GROQ_API_KEY = "gsk_your_key_here"' > .streamlit/secrets.toml
+cat > .streamlit/secrets.toml << EOF
+GROQ_API_KEY = "gsk_your_key_here"
+# Optional fallback providers:
+# CLOUDFLARE_API_KEY = "your_cloudflare_api_token"
+# CLOUDFLARE_ACCOUNT_ID = "your_cloudflare_account_id"
+# OPENROUTER_API_KEY = "sk-or-v1-your_key_here"
+EOF
 ```
 
 ### Run
@@ -95,6 +105,9 @@ Open http://localhost:8501
 
 ```toml
 GROQ_API_KEY = "gsk_your_key_here"
+CLOUDFLARE_API_KEY = "your_cloudflare_api_token"  # optional
+CLOUDFLARE_ACCOUNT_ID = "your_cloudflare_account_id"  # optional
+OPENROUTER_API_KEY = "sk-or-v1-your_key_here"  # optional
 ```
 
 5. Deploy — auto-redeploys on every push
@@ -145,7 +158,12 @@ The following can be set via environment variables or Streamlit secrets:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `GROQ_API_KEY` | — | **Required**. Groq API key |
-| `LLM_MODEL` | `llama-3.1-8b-instant` | Groq model ID |
+| `CLOUDFLARE_API_KEY` | — | Optional. Cloudflare Workers AI token |
+| `CLOUDFLARE_ACCOUNT_ID` | — | Optional. Cloudflare account ID |
+| `OPENROUTER_API_KEY` | — | Optional. OpenRouter API key |
+| `LLM_MODEL` | `llama-3.3-70b-versatile` | Groq model ID |
+| `CLOUDFLARE_MODEL` | `@cf/meta/llama-3.1-8b-instruct-fp8-fast` | Cloudflare model |
+| `OPENROUTER_MODEL` | `google/gemma-4-31b-it:free` | OpenRouter model |
 | `LLM_TEMPERATURE` | `0.3` | 0-1, lower = more focused |
 | `LLM_MAX_TOKENS` | `1024` | Max output tokens |
 | `EMBEDDING_MODEL` | `all-MiniLM-L6-v2` | Sentence-transformers model |

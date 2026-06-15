@@ -747,7 +747,7 @@ def on_summarize():
         batches.append((batch_chunks, batch_indices))
 
     def _summarize_batch(batch_chunks: list[str], batch_indices: list[int]) -> tuple[list[int], list[str]]:
-        """Summarize a batch of chunks in one API call — Groq first, OpenRouter fallback."""
+        """Summarize a batch of chunks in one API call — Groq → Cloudflare → OpenRouter fallback."""
         from src.config import get_openrouter_api_key, OPENROUTER_MODEL
 
         n = len(batch_chunks)
@@ -966,7 +966,7 @@ if not st.session_state.transcript_text:
         <div class="glass-card" style="text-align:center; padding:3rem 1rem; margin:2rem 0;">
             <p style="font-size:1.2rem; color:#6B7280; letter-spacing:2px;">GOT A LINK? LET'S GO!</p>
             <p style="font-size:0.8rem; color:#3a3a4e; margin-top:1rem;">
-            LLM: <span style="color:#00F0FF;">Llama 3.3 70B</span> via Groq + OpenRouter
+            LLM: <span style="color:#00F0FF;">Llama 3.3 70B</span> via Groq · Cloudflare Workers AI · OpenRouter
             &nbsp;·&nbsp;
             Embeddings: <span style="color:#FF00FF;">all-MiniLM-L6-v2</span>
             &nbsp;·&nbsp;
@@ -974,7 +974,7 @@ if not st.session_state.transcript_text:
             </p>
         </div>
         """, unsafe_allow_html=True)
-    st.markdown('<div class="app-footer">TubeSage v1.0 · Built with Streamlit · Deploy on Streamlit Cloud</div>', unsafe_allow_html=True)
+    st.markdown('<div class="app-footer">TubeSage v1.0 · Groq · Cloudflare Workers AI · OpenRouter · FAISS · LangChain</div>', unsafe_allow_html=True)
     st.stop()
 
 # ─── Tabs ───
