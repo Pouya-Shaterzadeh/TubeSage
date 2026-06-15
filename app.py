@@ -519,8 +519,13 @@ def stream_groq(prompt: str, system_prompt: str = ""):
             stream=True,
         )
         for chunk in stream:
-            if chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
+            content = (
+                chunk.choices[0].delta.content
+                if chunk.choices and hasattr(chunk.choices[0].delta, "content")
+                else None
+            )
+            if content:
+                yield content
         return
     except Exception as e:
         err = str(e)
@@ -546,8 +551,13 @@ def stream_groq(prompt: str, system_prompt: str = ""):
                 stream=True,
             )
             for chunk in stream_cf:
-                if chunk.choices[0].delta.content:
-                    yield chunk.choices[0].delta.content
+                content = (
+                    chunk.choices[0].delta.content
+                    if chunk.choices and hasattr(chunk.choices[0].delta, "content")
+                    else None
+                )
+                if content:
+                    yield content
             return
         except Exception:
             pass
@@ -572,8 +582,13 @@ def stream_groq(prompt: str, system_prompt: str = ""):
                 stream=True,
             )
             for chunk in stream_or:
-                if chunk.choices[0].delta.content:
-                    yield chunk.choices[0].delta.content
+                content = (
+                    chunk.choices[0].delta.content
+                    if chunk.choices and hasattr(chunk.choices[0].delta, "content")
+                    else None
+                )
+                if content:
+                    yield content
             return
         except Exception as e:
             err_str = str(e)
@@ -674,12 +689,13 @@ def on_summarize():
         )
         full = ""
         for token in stream_groq(prompt, system_prompt=system):
-            full += token
-            placeholder.markdown(f"""
-            <div class="glass-card" style="font-family:'Space Mono',monospace; color:#E0E0F0; line-height:1.7; white-space:pre-wrap;">
-            {full}
-            </div>
-            """, unsafe_allow_html=True)
+            if isinstance(token, str):
+                full += token
+                placeholder.markdown(f"""
+                <div class="glass-card" style="font-family:'Space Mono',monospace; color:#E0E0F0; line-height:1.7; white-space:pre-wrap;">
+                {full}
+                </div>
+                """, unsafe_allow_html=True)
         st.session_state.summary_text = full
         return
 
@@ -842,12 +858,13 @@ def on_summarize():
 
     full = ""
     for token in stream_groq(reduce_prompt, system_prompt=reduce_system):
-        full += token
-        placeholder.markdown(f"""
-        <div class="glass-card" style="font-family:'Space Mono',monospace; color:#E0E0F0; line-height:1.7; white-space:pre-wrap;">
-        {full}
-        </div>
-        """, unsafe_allow_html=True)
+        if isinstance(token, str):
+            full += token
+            placeholder.markdown(f"""
+            <div class="glass-card" style="font-family:'Space Mono',monospace; color:#E0E0F0; line-height:1.7; white-space:pre-wrap;">
+            {full}
+            </div>
+            """, unsafe_allow_html=True)
     st.session_state.summary_text = full
 
 
@@ -880,13 +897,14 @@ def on_ask(question: str):
     placeholder = st.empty()
     full = ""
     for token in stream_groq(prompt, system_prompt=system):
-        full += token
-        placeholder.markdown(f"""
-        <div class="chat-msg assistant" style="font-family:'Space Mono',monospace; color:#E0C0FF; line-height:1.7; white-space:pre-wrap;">
-        <strong style="color:#6B7280; font-size:0.75rem; letter-spacing:2px;">▹ TUBESAGE</strong><br>
-        {full}
-        </div>
-        """, unsafe_allow_html=True)
+        if isinstance(token, str):
+            full += token
+            placeholder.markdown(f"""
+            <div class="chat-msg assistant" style="font-family:'Space Mono',monospace; color:#E0C0FF; line-height:1.7; white-space:pre-wrap;">
+            <strong style="color:#6B7280; font-size:0.75rem; letter-spacing:2px;">▹ TUBESAGE</strong><br>
+            {full}
+            </div>
+            """, unsafe_allow_html=True)
 
     st.session_state.chat_history.append({"role": "user", "content": question})
     st.session_state.chat_history.append({"role": "assistant", "content": full})
