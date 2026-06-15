@@ -473,6 +473,7 @@ DEFAULTS = {
     "chat_history": [],
     "fetch_error": "",
     "summary_requested": False,
+    "last_fetched_url": "",
 }
 for key, val in DEFAULTS.items():
     if key not in st.session_state:
@@ -572,6 +573,10 @@ def on_fetch():
     if not url:
         return
 
+    # Guard: skip if same URL already loaded
+    if url == st.session_state.get("last_fetched_url") and st.session_state.transcript_text:
+        return
+
     st.session_state.transcript_raw = None
     st.session_state.transcript_text = ""
     st.session_state.video_id = None
@@ -601,6 +606,7 @@ def on_fetch():
     st.session_state.transcript_text = format_transcript(raw)
     st.session_state.video_id = vid
     st.session_state.video_meta = get_video_metadata(vid)
+    st.session_state.last_fetched_url = url
 
 
 def on_summarize():
@@ -827,22 +833,19 @@ st.markdown('<h1 class="app-title">TUBESAGE</h1>', unsafe_allow_html=True)
 st.markdown("<p class=\"app-subtitle\">Don't watch it all. Know it all.</p>", unsafe_allow_html=True)
 
 # Video URL input
-with st.form("url_form", clear_on_submit=False, border=False):
-    col_url, col_btn, _ = st.columns([5, 1, 1])
-    with col_url:
-        st.text_input(
-            "URL",
-            placeholder="https://www.youtube.com/watch?v=...",
-            key="video_url_input",
-            label_visibility="collapsed",
-        )
-    with col_btn:
-        st.markdown('<div class="primary-btn">', unsafe_allow_html=True)
-        submitted = st.form_submit_button("PROCESS", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-if submitted:
-    on_fetch()
+col_url, col_btn, _ = st.columns([5, 1, 1])
+with col_url:
+    st.text_input(
+        "URL",
+        placeholder="https://www.youtube.com/watch?v=...",
+        key="video_url_input",
+        label_visibility="collapsed",
+        on_change=on_fetch,
+    )
+with col_btn:
+    st.markdown('<div class="primary-btn">', unsafe_allow_html=True)
+    st.button("PROCESS", key="fetch_btn", on_click=on_fetch, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Video metadata bar
 meta = st.session_state.video_meta
