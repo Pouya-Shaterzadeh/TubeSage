@@ -29,7 +29,7 @@ QA_TEMPLATE = PromptTemplate(
 2. If the context doesn't contain enough information to answer fully, say so honestly.
 3. Be precise, concise, and avoid speculation.
 4. Structure your answer clearly with supporting details from the transcript.
-5. If relevant, mention timestamps from the context (provided as "Timestamp: MM:SS") to help the user locate the moment in the video.
+5. Do NOT include timestamps in your answer.
 
 [Context from Transcript]
 {context}

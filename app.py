@@ -796,8 +796,8 @@ def on_ask(question: str):
 
     system = (
         "You are an expert answering questions about a YouTube video based on its transcript. "
-        "Answer using ONLY the context below. Be precise and include timestamps "
-        "(they appear as 'Timestamp: M:SS' in the transcript). "
+        "Answer using ONLY the context below. Be precise and concise. "
+        "Do NOT mention timestamps. "
         "If the context doesn't contain enough info, say so honestly."
     )
     prompt = (
