@@ -8,9 +8,18 @@ from youtube_transcript_api import YouTubeTranscriptApi
 
 def get_video_id(url: str) -> str | None:
     patterns = [
-        r'(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})',
-        r'(?:youtu\.be\/)([a-zA-Z0-9_-]{11})',
-        r'(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})',
+        # Standard watch URL: youtube.com/watch?v=VIDEO_ID
+        r'(?:https?://)?(?:www\.|m\.)?youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})',
+        # Shortened: youtu.be/VIDEO_ID
+        r'(?:https?://)?youtu\.be/([a-zA-Z0-9_-]{11})',
+        # Embed: youtube.com/embed/VIDEO_ID
+        r'(?:https?://)?(?:www\.)?youtube\.com/embed/([a-zA-Z0-9_-]{11})',
+        # Shorts: youtube.com/shorts/VIDEO_ID
+        r'(?:https?://)?(?:www\.)?youtube\.com/shorts/([a-zA-Z0-9_-]{11})',
+        # Live: youtube.com/live/VIDEO_ID
+        r'(?:https?://)?(?:www\.)?youtube\.com/live/([a-zA-Z0-9_-]{11})',
+        # Watch with extra params: youtube.com/watch?param=val&v=VIDEO_ID
+        r'(?:https?://)?(?:www\.|m\.)?youtube\.com/watch\?[^"\s]*v=([a-zA-Z0-9_-]{11})',
     ]
     for pattern in patterns:
         match = re.search(pattern, url)
