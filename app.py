@@ -660,6 +660,26 @@ def on_summarize():
 
     # ── Parallel Map Phase (batched: 3 chunks per API call) ──
     import re
+    import threading
+
+    _or_lock = threading.Lock()
+    _or_last_call = 0.0
+
+    def _rate_limited_openrouter(or_key, messages, temp, max_tok):
+        """Call OpenRouter with a 3-second gap to stay under 20 RPM."""
+        nonlocal _or_last_call
+        with _or_lock:
+            elapsed = time.time() - _or_last_call
+            if elapsed < 3.5:
+                time.sleep(3.5 - elapsed)
+            _or_last_call = time.time()
+        from openai import OpenAI
+        client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=or_key)
+        resp = client.chat.completions.create(
+            model=OPENROUTER_MODEL, messages=messages,
+            temperature=temp, max_tokens=max_tok,
+        )
+        return resp.choices[0].message.content.strip()
 
     BATCH_SIZE = 3
     batches = []
@@ -696,16 +716,10 @@ def on_summarize():
             return resp.choices[0].message.content.strip()
 
         def _try_openrouter():
-            from openai import OpenAI
             or_key = get_openrouter_api_key()
             if not or_key:
                 raise RuntimeError("No OpenRouter key")
-            client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=or_key)
-            resp = client.chat.completions.create(
-                model=OPENROUTER_MODEL, messages=messages,
-                temperature=llm_temp, max_tokens=llm_max_tokens * n,
-            )
-            return resp.choices[0].message.content.strip()
+            return _rate_limited_openrouter(or_key, messages, llm_temp, llm_max_tokens * n)
 
         for attempt in range(3):
             try:
@@ -744,7 +758,7 @@ def on_summarize():
     completed = 0
     status_text = st.empty()
 
-    with ThreadPoolExecutor(max_workers=8) as pool:
+    with ThreadPoolExecutor(max_workers=4) as pool:
         futures = {
             pool.submit(_summarize_batch, bc, bi): bi
             for bc, bi in batches
