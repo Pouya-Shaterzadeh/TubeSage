@@ -626,7 +626,7 @@ def on_summarize():
     total_chunks = len(chunks)
 
     # Short transcript: summarize directly
-    if total_chunks <= 5:
+    if total_chunks <= 3:
         prompt = (
             "Read the transcript below and create a concise summary capturing the core message, "
             "key points, and main insights. Write a single well-structured paragraph.\n\n"
@@ -643,21 +643,40 @@ def on_summarize():
         st.session_state.summary_text = full
         return
 
-    # ── Parallel Map Phase ──
-    def _summarize_one(chunk: str, idx: int) -> tuple[int, str]:
-        """Summarize a single chunk — Groq first, OpenRouter fallback."""
+    # ── Parallel Map Phase (batched: 3 chunks per API call) ──
+    import re
+
+    BATCH_SIZE = 3
+    batches = []
+    for i in range(0, total_chunks, BATCH_SIZE):
+        batch_chunks = chunks[i : i + BATCH_SIZE]
+        batch_indices = list(range(i, min(i + BATCH_SIZE, total_chunks)))
+        batches.append((batch_chunks, batch_indices))
+
+    def _summarize_batch(batch_chunks: list[str], batch_indices: list[int]) -> tuple[list[int], list[str]]:
+        """Summarize a batch of chunks in one API call — Groq first, OpenRouter fallback."""
         from src.config import get_openrouter_api_key, OPENROUTER_MODEL
+
+        n = len(batch_chunks)
+        numbered = "\n\n".join(
+            f"[Segment {j+1}]\n{c}" for j, c in enumerate(batch_chunks)
+        )
+        prompt_text = (
+            f"Below are {n} transcript segments. Summarize EACH segment in 2-3 sentences. "
+            f"Number your summaries exactly as [1] through [{n}].\n\n"
+            f"{numbered}\n\n[Summaries]"
+        )
 
         messages = [
             {"role": "system", "content": system},
-            {"role": "user", "content": f"Summarize this transcript segment in 2-3 sentences capturing only the key points:\n\n[Segment]\n{chunk}\n\n[Summary]"},
+            {"role": "user", "content": prompt_text},
         ]
 
         def _try_groq():
             client = Groq(api_key=api_key)
             resp = client.chat.completions.create(
                 model=LLM_MODEL, messages=messages,
-                temperature=llm_temp, max_tokens=llm_max_tokens,
+                temperature=llm_temp, max_tokens=llm_max_tokens * n,
             )
             return resp.choices[0].message.content.strip()
 
@@ -669,37 +688,57 @@ def on_summarize():
             client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=or_key)
             resp = client.chat.completions.create(
                 model=OPENROUTER_MODEL, messages=messages,
-                temperature=llm_temp, max_tokens=llm_max_tokens,
+                temperature=llm_temp, max_tokens=llm_max_tokens * n,
             )
             return resp.choices[0].message.content.strip()
 
         for attempt in range(3):
             try:
-                return (idx, _try_groq())
+                text_result = _try_groq()
+                break
             except Exception as e:
                 err = str(e)
                 is_rate = "429" in err or "rate_limit" in err.lower()
                 if is_rate and get_openrouter_api_key():
                     try:
-                        return (idx, _try_openrouter())
+                        text_result = _try_openrouter()
+                        break
                     except Exception as e2:
-                        return (idx, f"[Error: {e2}]")
+                        return (batch_indices, [f"[Error: {e2}]"] * n)
                 if attempt < 2:
                     time.sleep((attempt + 1) * 1.5)
                     continue
-                return (idx, f"[Error: {err}]")
-        return (idx, "[Error: summarization failed]")
+                return (batch_indices, [f"[Error: {err}]"] * n)
+        else:
+            return (batch_indices, ["[Error: summarization failed]"] * n)
+
+        # Parse numbered summaries from response
+        summaries = [""] * n
+        pattern = re.compile(r"\[(\d+)\]\s*(.*?)(?=\[\d+\]|$)", re.DOTALL)
+        matches = pattern.findall(text_result)
+        for num_str, summary_text in matches:
+            num = int(num_str) - 1
+            if 0 <= num < n:
+                summaries[num] = summary_text.strip()
+        # Fallback: if parsing failed, use the whole text as first summary
+        if all(not s for s in summaries):
+            summaries[0] = text_result.strip()
+        return (batch_indices, summaries)
 
     chunk_summaries: list = [None] * total_chunks
     completed = 0
     status_text = st.empty()
 
-    with ThreadPoolExecutor(max_workers=5) as pool:
-        futures = {pool.submit(_summarize_one, chunk, i): i for i, chunk in enumerate(chunks)}
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        futures = {
+            pool.submit(_summarize_batch, bc, bi): bi
+            for bc, bi in batches
+        }
         for future in as_completed(futures):
-            idx, summary = future.result()
-            chunk_summaries[idx] = summary
-            completed += 1
+            indices, summaries = future.result()
+            for idx, summary in zip(indices, summaries):
+                chunk_summaries[idx] = summary
+                completed += 1
             status_text.caption(f"Summarizing chunks... {completed}/{total_chunks}")
     status_text.empty()
 
