@@ -17,10 +17,17 @@ def get_groq_api_key() -> str:
     return _get_secret("GROQ_API_KEY")
 
 
+def get_openrouter_api_key() -> str:
+    return _get_secret("OPENROUTER_API_KEY")
+
+
 # ---- LLM ----
 LLM_MODEL = os.getenv("LLM_MODEL", "llama-3.1-8b-instant")
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))
 LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "1024"))
+
+# ---- OpenRouter Fallback ----
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.1-8b-instruct")
 
 # ---- Embeddings ----
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")

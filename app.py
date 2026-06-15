@@ -492,6 +492,7 @@ DEFAULTS = {
     "summary_text": "",
     "chat_history": [],
     "fetch_error": "",
+    "summary_requested": False,
 }
 for key, val in DEFAULTS.items():
     if key not in st.session_state:
@@ -508,33 +509,65 @@ def format_duration(seconds):
 
 
 def stream_groq(prompt: str, system_prompt: str = ""):
-    """Stream tokens from Groq."""
+    """Stream tokens from Groq, with OpenRouter fallback on rate limit."""
     from groq import Groq
+    from src.config import get_openrouter_api_key, OPENROUTER_MODEL
 
     api_key = get_groq_api_key()
     if not api_key:
-        yield "[Error: GROQ_API_KEY not set. Add it to .streamlit/secrets.toml]"
+        yield "[Error: GROQ_API_KEY not set.]"
         return
 
-    client = Groq(api_key=api_key)
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
 
+    temp = st.session_state.get("llm_temp", 0.3)
+    max_tok = st.session_state.get("llm_max_tokens", 1024)
+
+    # ── Try Groq ──
     try:
+        client = Groq(api_key=api_key)
         stream = client.chat.completions.create(
             model=LLM_MODEL,
             messages=messages,
-            temperature=st.session_state.get("llm_temp", 0.3),
-            max_tokens=st.session_state.get("llm_max_tokens", 1024),
+            temperature=temp,
+            max_tokens=max_tok,
             stream=True,
         )
         for chunk in stream:
             if chunk.choices[0].delta.content:
                 yield chunk.choices[0].delta.content
+        return
     except Exception as e:
-        yield f"\n\n[Error: {str(e)}]"
+        err = str(e)
+        if "429" not in err and "rate_limit" not in err.lower():
+            yield f"\n\n[Error: {err}]"
+            return
+
+    # ── Fallback to OpenRouter ──
+    or_key = get_openrouter_api_key()
+    if not or_key:
+        yield "\n\n[Groq rate-limited. Add OPENROUTER_API_KEY for fallback.]"
+        return
+
+    yield "\n"
+    from openai import OpenAI
+    try:
+        client_or = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=or_key)
+        stream_or = client_or.chat.completions.create(
+            model=OPENROUTER_MODEL,
+            messages=messages,
+            temperature=temp,
+            max_tokens=max_tok,
+            stream=True,
+        )
+        for chunk in stream_or:
+            if chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
+    except Exception as e:
+        yield f"\n\n[OpenRouter fallback error: {e}]"
 
 
 def _get_or_build_faiss(video_id: str, text: str):
@@ -632,28 +665,47 @@ def on_summarize():
 
     # ── Parallel Map Phase ──
     def _summarize_one(chunk: str, idx: int) -> tuple[int, str]:
-        """Summarize a single chunk with retry on rate-limit."""
+        """Summarize a single chunk — Groq first, OpenRouter fallback."""
+        from src.config import get_openrouter_api_key, OPENROUTER_MODEL
+
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": f"Summarize this transcript segment in 2-3 sentences capturing only the key points:\n\n[Segment]\n{chunk}\n\n[Summary]"},
+        ]
+
+        def _try_groq():
+            client = Groq(api_key=api_key)
+            resp = client.chat.completions.create(
+                model=LLM_MODEL, messages=messages,
+                temperature=llm_temp, max_tokens=llm_max_tokens,
+            )
+            return resp.choices[0].message.content.strip()
+
+        def _try_openrouter():
+            from openai import OpenAI
+            or_key = get_openrouter_api_key()
+            if not or_key:
+                raise RuntimeError("No OpenRouter key")
+            client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=or_key)
+            resp = client.chat.completions.create(
+                model=OPENROUTER_MODEL, messages=messages,
+                temperature=llm_temp, max_tokens=llm_max_tokens,
+            )
+            return resp.choices[0].message.content.strip()
+
         for attempt in range(3):
             try:
-                client = Groq(api_key=api_key)
-                resp = client.chat.completions.create(
-                    model=LLM_MODEL,
-                    messages=[
-                        {"role": "system", "content": system},
-                        {"role": "user", "content": f"Summarize this transcript segment in 2-3 sentences capturing only the key points:\n\n[Segment]\n{chunk}\n\n[Summary]"},
-                    ],
-                    temperature=llm_temp,
-                    max_tokens=llm_max_tokens,
-                )
-                return (idx, resp.choices[0].message.content.strip())
+                return (idx, _try_groq())
             except Exception as e:
                 err = str(e)
-                if "429" in err or "rate_limit" in err.lower():
-                    if attempt < 2:
-                        time.sleep((attempt + 1) * 1.5)
-                        continue
+                is_rate = "429" in err or "rate_limit" in err.lower()
+                if is_rate and get_openrouter_api_key():
+                    try:
+                        return (idx, _try_openrouter())
+                    except Exception as e2:
+                        return (idx, f"[Error: {e2}]")
                 if attempt < 2:
-                    time.sleep(1)
+                    time.sleep((attempt + 1) * 1.5)
                     continue
                 return (idx, f"[Error: {err}]")
         return (idx, "[Error: summarization failed]")
@@ -795,7 +847,7 @@ if not st.session_state.transcript_text:
         <div class="glass-card" style="text-align:center; padding:3rem 1rem; margin:2rem 0;">
             <p style="font-size:1.2rem; color:#6B7280; letter-spacing:2px;">GOT A LINK? LET'S GO!</p>
             <p style="font-size:0.8rem; color:#3a3a4e; margin-top:1rem;">
-            LLM: <span style="color:#00F0FF;">Llama 3.1 8B</span> via Groq
+            LLM: <span style="color:#00F0FF;">Llama 3.1 8B</span> via Groq + OpenRouter
             &nbsp;·&nbsp;
             Embeddings: <span style="color:#FF00FF;">all-MiniLM-L6-v2</span>
             &nbsp;·&nbsp;
@@ -814,11 +866,13 @@ with tab1:
     with left:
         st.markdown("### Video Summary")
     with right:
-        st.button("GENERATE SUMMARY", key="summarize_btn", use_container_width=True)
+        st.button("GENERATE SUMMARY", key="summarize_btn", on_click=lambda: st.session_state.update(summary_requested=True), use_container_width=True)
 
-    if st.session_state.summarize_btn:
-        with st.spinner("Generating summary..."):
-            on_summarize()
+    if st.session_state.summary_requested:
+        st.session_state.summary_requested = False
+        status = st.caption("Generating summary...")
+        on_summarize()
+        status.empty()
 
     elif st.session_state.summary_text:
         st.markdown(f"""
@@ -847,8 +901,9 @@ with tab2:
         st.markdown("")  # spacer
 
     if question:
-        with st.spinner("Searching transcript & generating answer..."):
-            on_ask(question)
+        status = st.caption("Searching transcript...")
+        on_ask(question)
+        status.empty()
         st.rerun()
 
 
@@ -857,7 +912,7 @@ with st.sidebar:
     st.markdown('<p class="sidebar-header">CONTROLS</p>', unsafe_allow_html=True)
 
     st.markdown("**Model**")
-    st.caption(f"LLM: `{LLM_MODEL}` via Groq")
+    st.caption(f"LLM: `{LLM_MODEL}` via Groq + OpenRouter fallback")
 
     st.session_state.llm_temp = st.slider(
         "Temperature",
