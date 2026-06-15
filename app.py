@@ -535,20 +535,28 @@ def stream_groq(prompt: str, system_prompt: str = ""):
 
     yield "\n"
     from openai import OpenAI
-    try:
-        client_or = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=or_key)
-        stream_or = client_or.chat.completions.create(
-            model=OPENROUTER_MODEL,
-            messages=messages,
-            temperature=temp,
-            max_tokens=max_tok,
-            stream=True,
-        )
-        for chunk in stream_or:
-            if chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
-    except Exception as e:
-        yield f"\n\n[OpenRouter fallback error: {e}]"
+    import time as _time
+    for or_attempt in range(2):
+        try:
+            client_or = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=or_key)
+            stream_or = client_or.chat.completions.create(
+                model=OPENROUTER_MODEL,
+                messages=messages,
+                temperature=temp,
+                max_tokens=max_tok,
+                stream=True,
+            )
+            for chunk in stream_or:
+                if chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+            return
+        except Exception as e:
+            err_str = str(e)
+            if "429" in err_str and or_attempt < 1:
+                _time.sleep(3)
+                continue
+            yield f"\n\n[OpenRouter fallback error: {err_str}]"
+            return
 
 
 def _get_or_build_faiss(video_id: str, text: str):
