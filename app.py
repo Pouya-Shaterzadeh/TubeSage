@@ -15,7 +15,7 @@ st.set_page_config(
     page_title="TubeSage — AI YouTube Summarizer",
     page_icon="assets/logo.png",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ─── Custom CSS ───
@@ -130,14 +130,8 @@ st.markdown("""
 
     /* Preserve Material Icons */
     [data-testid="stIconMaterial"],
-    [data-testid="stSidebarCollapseButton"] *,
     .st-emotion-cache-1dkvzay {
         font-family: "Material Icons", "Material Icons Outlined" !important;
-    }
-
-    /* Hide the sidebar collapse button entirely */
-    [data-testid="stSidebarCollapseButton"] {
-        display: none !important;
     }
 
     .app-title {
@@ -300,20 +294,6 @@ st.markdown("""
         border: 1px solid rgba(255,0,255,0.2);
         margin-right: 2rem;
         color: #E0C0FF;
-    }
-
-    [data-testid="stSidebar"] {
-        background: rgba(10,10,25,0.95) !important;
-        border-right: 1px solid rgba(0,240,255,0.1) !important;
-    }
-    .sidebar-header {
-        font-family: 'Share Tech Mono', monospace !important;
-        color: #00F0FF;
-        font-size: 1.1rem;
-        letter-spacing: 2px;
-        border-bottom: 1px solid rgba(0,240,255,0.2);
-        padding-bottom: 0.5rem;
-        margin-bottom: 1rem;
     }
 
     .stSlider > div > div > div > div {
@@ -906,40 +886,5 @@ with tab2:
         status.empty()
         st.rerun()
 
-
-# ─── Sidebar ───
-with st.sidebar:
-    st.markdown('<p class="sidebar-header">CONTROLS</p>', unsafe_allow_html=True)
-
-    st.markdown("**Model**")
-    st.caption(f"LLM: `{LLM_MODEL}` via Groq + OpenRouter fallback")
-
-    st.session_state.llm_temp = st.slider(
-        "Temperature",
-        min_value=0.0, max_value=1.0, value=0.3, step=0.05,
-        help="Lower = focused, higher = creative",
-    )
-    st.session_state.llm_max_tokens = st.slider(
-        "Max Output Tokens",
-        min_value=128, max_value=4096, value=1024, step=128,
-    )
-
-    st.divider()
-    st.markdown("**Chunking**")
-    st.caption(f"Size: `{CHUNK_SIZE}` · Overlap: `{CHUNK_OVERLAP}` · Retrieval K: `{RETRIEVAL_K}`")
-
-    st.divider()
-    if st.button("CLEAR & RESET", use_container_width=True):
-        for key in DEFAULTS:
-            st.session_state[key] = DEFAULTS[key]
-        st.rerun()
-
-    st.divider()
-    st.markdown(
-        '<p style="font-size:0.7rem; color:#3a3a4e; text-align:center;">'
-        'TubeSage v1.0<br>Groq · FAISS · LangChain'
-        '</p>',
-        unsafe_allow_html=True,
-    )
 
 st.markdown('<div class="app-footer">TubeSage v1.0 · Built with Streamlit · Deploy on Streamlit Cloud</div>', unsafe_allow_html=True)
