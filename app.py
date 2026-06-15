@@ -827,18 +827,22 @@ st.markdown('<h1 class="app-title">TUBESAGE</h1>', unsafe_allow_html=True)
 st.markdown("<p class=\"app-subtitle\">Don't watch it all. Know it all.</p>", unsafe_allow_html=True)
 
 # Video URL input
-col_url, col_btn, _ = st.columns([5, 1, 1])
-with col_url:
-    st.text_input(
-        "URL",
-        placeholder="https://www.youtube.com/watch?v=...",
-        key="video_url_input",
-        label_visibility="collapsed",
-    )
-with col_btn:
-    st.markdown('<div class="primary-btn">', unsafe_allow_html=True)
-    st.button("PROCESS", key="fetch_btn", on_click=on_fetch, use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+with st.form("url_form", clear_on_submit=False, border=False):
+    col_url, col_btn, _ = st.columns([5, 1, 1])
+    with col_url:
+        st.text_input(
+            "URL",
+            placeholder="https://www.youtube.com/watch?v=...",
+            key="video_url_input",
+            label_visibility="collapsed",
+        )
+    with col_btn:
+        st.markdown('<div class="primary-btn">', unsafe_allow_html=True)
+        submitted = st.form_submit_button("PROCESS", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+if submitted:
+    on_fetch()
 
 # Video metadata bar
 meta = st.session_state.video_meta
