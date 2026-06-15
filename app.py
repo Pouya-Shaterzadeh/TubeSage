@@ -490,9 +490,10 @@ def format_duration(seconds):
 
 
 def stream_groq(prompt: str, system_prompt: str = ""):
-    """Stream tokens from Groq, with OpenRouter fallback on rate limit."""
+    """Stream tokens from Groq, with Cloudflare + OpenRouter fallbacks on rate limit."""
     from groq import Groq
     from src.config import get_openrouter_api_key, OPENROUTER_MODEL
+    from src.config import get_cloudflare_creds, CLOUDFLARE_MODEL
 
     api_key = get_groq_api_key()
     if not api_key:
@@ -527,10 +528,34 @@ def stream_groq(prompt: str, system_prompt: str = ""):
             yield f"\n\n[Error: {err}]"
             return
 
-    # ── Fallback to OpenRouter ──
+    # ── Fallback 1: Cloudflare Workers AI ──
+    cf_key, cf_account = get_cloudflare_creds()
+    if cf_key and cf_account:
+        yield "\n"
+        from openai import OpenAI
+        try:
+            client_cf = OpenAI(
+                base_url=f"https://api.cloudflare.com/client/v4/accounts/{cf_account}/ai/v1",
+                api_key=cf_key,
+            )
+            stream_cf = client_cf.chat.completions.create(
+                model=CLOUDFLARE_MODEL,
+                messages=messages,
+                temperature=temp,
+                max_tokens=max_tok,
+                stream=True,
+            )
+            for chunk in stream_cf:
+                if chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+            return
+        except Exception:
+            pass
+
+    # ── Fallback 2: OpenRouter ──
     or_key = get_openrouter_api_key()
     if not or_key:
-        yield "\n\n[Groq rate-limited. Add OPENROUTER_API_KEY for fallback.]"
+        yield "\n\n[Groq rate-limited. Add more fallback API keys.]"
         return
 
     yield "\n"
@@ -681,6 +706,23 @@ def on_summarize():
         )
         return resp.choices[0].message.content.strip()
 
+    def _try_cloudflare(messages, temp, max_tok):
+        """Call Cloudflare Workers AI."""
+        from src.config import get_cloudflare_creds, CLOUDFLARE_MODEL
+        from openai import OpenAI
+        cf_key, cf_account = get_cloudflare_creds()
+        if not cf_key or not cf_account:
+            raise RuntimeError("No Cloudflare creds")
+        client = OpenAI(
+            base_url=f"https://api.cloudflare.com/client/v4/accounts/{cf_account}/ai/v1",
+            api_key=cf_key,
+        )
+        resp = client.chat.completions.create(
+            model=CLOUDFLARE_MODEL, messages=messages,
+            temperature=temp, max_tokens=max_tok,
+        )
+        return resp.choices[0].message.content.strip()
+
     BATCH_SIZE = 3
     batches = []
     for i in range(0, total_chunks, BATCH_SIZE):
@@ -728,12 +770,20 @@ def on_summarize():
             except Exception as e:
                 err = str(e)
                 is_rate = "429" in err or "rate_limit" in err.lower()
-                if is_rate and get_openrouter_api_key():
+                # Fallback 1: Cloudflare
+                if is_rate:
                     try:
-                        text_result = _try_openrouter()
+                        text_result = _try_cloudflare(messages, llm_temp, llm_max_tokens * n)
                         break
-                    except Exception as e2:
-                        return (batch_indices, [f"[Error: {e2}]"] * n)
+                    except Exception:
+                        pass
+                    # Fallback 2: OpenRouter
+                    if get_openrouter_api_key():
+                        try:
+                            text_result = _try_openrouter()
+                            break
+                        except Exception as e2:
+                            return (batch_indices, [f"[Error: {e2}]"] * n)
                 if attempt < 2:
                     time.sleep((attempt + 1) * 1.5)
                     continue

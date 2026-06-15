@@ -21,6 +21,13 @@ def get_openrouter_api_key() -> str:
     return _get_secret("OPENROUTER_API_KEY")
 
 
+def get_cloudflare_creds() -> tuple[str, str]:
+    return (
+        _get_secret("CLOUDFLARE_API_KEY"),
+        _get_secret("CLOUDFLARE_ACCOUNT_ID"),
+    )
+
+
 # ---- LLM ----
 LLM_MODEL = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.3"))
@@ -28,6 +35,9 @@ LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "1024"))
 
 # ---- OpenRouter Fallback ----
 OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "google/gemma-4-31b-it:free")
+
+# ---- Cloudflare Workers AI Fallback ----
+CLOUDFLARE_MODEL = os.getenv("CLOUDFLARE_MODEL", "@cf/meta/llama-3.1-8b-instruct-fp8-fast")
 
 # ---- Embeddings ----
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
